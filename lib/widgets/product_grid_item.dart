@@ -1,0 +1,120 @@
+import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
+import '../models/product.dart';
+import '../providers/cart_provider.dart';
+import '../screens/product_detail_screen.dart';
+import '../screens/cart_screen.dart';
+
+class ProductGridItem extends StatelessWidget {
+  final Product product;
+
+  const ProductGridItem({Key? key, required this.product}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (ctx) => ProductDetailScreen(product: product),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Product Image
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(10),
+                  topRight: Radius.circular(10),
+                ),
+                child: Hero(
+                  tag: 'product-${product.id}',
+                  child: CachedNetworkImage(
+                    imageUrl: product.image,
+                    fit: BoxFit.contain,
+                    placeholder:
+                        (context, url) =>
+                            const Center(child: CircularProgressIndicator()),
+                    errorWidget:
+                        (context, url, error) => Container(
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.image, size: 50),
+                        ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title with ellipsis
+                  Text(
+                    product.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  // Price
+                  Text(
+                    '\$${product.price.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Add to cart button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        cartProvider.addItem(product);
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Added item to cart!'),
+                            duration: const Duration(seconds: 2),
+                            action: SnackBarAction(
+                              label: 'VIEW CART',
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (ctx) => const CartScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 8,
+                        ),
+                      ),
+                      child: const Text('Add to Cart'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
